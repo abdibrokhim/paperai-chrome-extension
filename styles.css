@@ -1,0 +1,52 @@
+/* styles.css */
+
+/* Overlay styles */
+#ibm-granite-overlay {
+  cursor: pointer;
+  position: absolute;
+  width: 140px;
+  height: 40px;
+  border-radius: 4px;
+  background-color: #333;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0 5px;
+  box-sizing: border-box;
+}
+
+#ask-button {
+  color: #fff;
+  background: transparent;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+#ask-button:disabled {
+  color: #aaa;
+  cursor: default;
+}
+
+#ask-button:hover {
+  color: #000;
+  background: #aaaaaa;
+  padding: 5px 10px;
+  border-radius: 4px;
+}
+
+/* Response styles */
+.response-container {
+  margin-top: 10px;
+  background: #fff;
+  border-left: 4px solid #007bff;
+  padding: 10px;
+  border-radius: 4px;
+  max-width: 600px;
+}
+
+.response-text {
+  font-size: 14px;
+  color: #000;
+  white-space: pre-wrap; /* Preserve line breaks */
+}
