@@ -2,9 +2,19 @@ require('dotenv').config();
 const express = require('express');
 const fetch = require('node-fetch');
 const { getAccessToken } = require('./ibmAuth');
+const { chatCompletion } = require('./chat');
 
 const app = express();
 const port = 3001;
+
+const cors = require('cors');
+
+app.use(cors({
+  origin: '*',  // Allow requests from any origin
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+
 
 app.use(express.json());
 
@@ -78,6 +88,57 @@ ${input}
     res.status(500).json({ error: 'Internal Server Error', details: error.message });
   }
 });
+
+app.post('/chat', async (req, res) => {
+    try {
+      const { question, stream } = req.body;
+      const messages = [{ role: "user", content: question }];
+  
+      if (stream) {
+        const completionStream = await chatCompletion(messages, "gpt-4o", true);
+  
+        res.setHeader('Content-Type', 'text/event-stream');
+        completionStream.on('data', (chunk) => {
+          const data = chunk.toString();
+  
+          // Parse the JSON chunk to extract the content
+          const lines = data.split("\n");
+          for (const line of lines) {
+            if (line.trim().startsWith('data:')) {
+              const json = line.replace(/^data: /, '');
+              if (json !== '[DONE]') {
+                try {
+                  const parsed = JSON.parse(json);
+                  const content = parsed.choices[0].delta?.content || '';
+                  if (content) {
+                    res.write(`data: ${content}\n\n`);
+                  }
+                } catch (err) {
+                  console.error('Failed to parse chunk', err);
+                }
+              }
+            }
+          }
+        });
+  
+        completionStream.on('end', () => {
+          res.write('data: [DONE]\n\n');
+          res.end();
+        });
+  
+        completionStream.on('error', (err) => {
+          res.status(500).json({ error: err.message });
+        });
+  
+      } else {
+        const answer = await chatCompletion(messages);
+        res.status(200).json({ answer });
+      }
+  
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
